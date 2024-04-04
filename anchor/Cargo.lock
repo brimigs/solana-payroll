@@ -1092,6 +1092,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "de3145af08024dea9fa9914f381a17b8fc6034dfb00f3a84013f7ff43f29ed4c"
 
 [[package]]
+name = "payroll"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+]
+
+[[package]]
 name = "pbkdf2"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1438,13 +1445,6 @@ dependencies = [
  "quote",
  "rustc_version",
  "syn 2.0.51",
-]
-
-[[package]]
-name = "solana-payroll"
-version = "0.1.0"
-dependencies = [
- "anchor-lang",
 ]
 
 [[package]]

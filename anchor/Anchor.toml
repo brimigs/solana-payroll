@@ -5,14 +5,14 @@ seeds = false
 skip-lint = false
 
 [programs.localnet]
-solana_payroll = "8xX7Wuky8dcHtsfrkJ7tGcjvLPCUp9iisV2mQ92pzmWJ"
+payroll = "3eU2jCNmr9JJQUdJa2KJVZLsnYxjnKpPZgkvdFmveXKK"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
 cluster = "Localnet"
-wallet = "~/.config/solana/id.json"
+wallet = "/Users/brimigs/.config/solana/id.json"
 
 [scripts]
 test = "../node_modules/.bin/nx run anchor:jest"

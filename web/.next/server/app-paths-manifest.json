@@ -1,3 +1,4 @@
 {
-  "/solana-payroll/page": "app/solana-payroll/page.js"
+  "/page": "app/page.js",
+  "/payroll/page": "app/payroll/page.js"
 }
