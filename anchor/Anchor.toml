@@ -5,7 +5,7 @@ seeds = false
 skip-lint = false
 
 [programs.localnet]
-payroll = "3eU2jCNmr9JJQUdJa2KJVZLsnYxjnKpPZgkvdFmveXKK"
+payroll = "9avcSUdT42MYMHHqxGXFuRow8K9befpYy9useB3FZyYK"
 
 [registry]
 url = "https://api.apr.dev"

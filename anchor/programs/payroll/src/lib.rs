@@ -2,23 +2,29 @@
 
 use anchor_lang::prelude::*;
 
-declare_id!("3eU2jCNmr9JJQUdJa2KJVZLsnYxjnKpPZgkvdFmveXKK");
+declare_id!("9avcSUdT42MYMHHqxGXFuRow8K9befpYy9useB3FZyYK");
 
 #[program]
 pub mod payroll {
-    use anchor_lang::solana_program::{program::invoke, system_instruction};
 
     use super::*;
 
     pub fn initialize_payroll(ctx: Context<InitializeSolanaPayroll>, title: String) -> Result<()> {
         let payroll = &mut ctx.accounts.solana_payroll;
-        payroll.admin = ctx.accounts.admin.key();
+        payroll.id_counter = 0;
         payroll.title = title;
+        payroll.employees = vec![];
+        payroll.admin = ctx.accounts.admin.key();
         Ok(())
     }
 
-    pub fn add_employee(ctx: Context<AddEmployee>, _title: String, salary: u64, name: String) -> Result<()> {
+    pub fn add_employee(
+        ctx: Context<AddEmployee>,
+        salary: u64,
+        name: String,
+    ) -> Result<()> {
         let payroll = &mut ctx.accounts.solana_payroll;
+        let employee = &mut ctx.accounts.employee;
 
         // Ensure that the admin is removing the employee
         if payroll.admin != ctx.accounts.admin.key() {
@@ -27,106 +33,64 @@ pub mod payroll {
 
         payroll.id_counter += 1;
         let employee_id = payroll.id_counter;
-        let employee = Employee {
-            salary,
-            pubkey: *ctx.accounts.employee.key,
-            name,
-            employee_id,
-        };
 
-        payroll.employees.push(employee);
+        employee.employee_id = employee_id;
+        employee.salary = salary;
+        employee.name = name;
+
+        // payroll.employees.push(pubkey);
 
         Ok(())
     }
 
-    pub fn remove_employee(ctx: Context<RemoveEmployee>, _title: String, employee_id: u64) -> Result<()> {
-        let payroll = &mut ctx.accounts.solana_payroll;
-
-        // Ensure that the admin is removing the employee
-        if payroll.admin != ctx.accounts.admin.key() {
-            return Err(ProgramError::IllegalOwner.into());
-        }
-
-        // Find the index of the employee to be removed
-        let index = payroll
-            .employees
-            .iter()
-            .position(|employee| employee.employee_id == employee_id);
-        if let Some(index) = index {
-            // Remove the employee from the vector
-            payroll.employees.remove(index);
-            Ok(())
-        } else {
-            Err(ProgramError::InvalidArgument.into())
-        }
-    }
-
     pub fn update_salary(
         ctx: Context<UpdateSalary>,
-        employee_id: u64,
+        _name: String,
         new_salary: u64,
-        _title: String,
     ) -> Result<()> {
         let payroll = &mut ctx.accounts.solana_payroll;
+        let employee = &mut ctx.accounts.employee;
 
         // Ensure that the admin is removing the employee
         if payroll.admin != ctx.accounts.admin.key() {
             return Err(ProgramError::IllegalOwner.into());
         }
 
-        // Find the index of the employee to be removed
-        if let Some(employee) = payroll
-            .employees
-            .iter_mut()
-            .find(|employee| employee.employee_id == employee_id)
-        {
-            employee.salary = new_salary;
-            Ok(())
-        } else {
-            Err(ProgramError::InvalidArgument.into())
-        }
+        employee.salary = new_salary;
+
+        Ok(())
     }
 
-    pub fn process_payroll(ctx: Context<ProcessPayroll>) -> Result<()> {
-      let admin_key = ctx.accounts.admin.key();
-      let payroll_account_info = ctx.accounts.payroll_account.to_account_info();
-      let employee_account_info = ctx.accounts.employee.clone();
-      let system_program = ctx.accounts.system_program.to_account_info();
-  
-      // Ensure that the admin is processing the payroll
-      if *payroll_account_info.owner != admin_key {
-          return Err(ProgramError::IllegalOwner.into());
-      }
-  
-      // Find the employee in the payroll account
-      let employee = ctx.accounts.payroll_account.employees.iter()
-          .find(|e| e.pubkey == *employee_account_info.key);
-  
-      if let Some(employee) = employee {
-          // Construct a transfer instruction for the employee
-          let transfer_instruction = system_instruction::transfer(
-              payroll_account_info.key,
-              employee_account_info.key,
-              employee.salary,
-          );
-  
-          // Actually invoke the transfer instruction
-          invoke(
-              &transfer_instruction,
-              &[
-                  payroll_account_info,
-                  employee_account_info,
-                  system_program,
-              ],
-          )?;
-      } else {
-          return Err(ProgramError::InvalidArgument.into());
-      }
-  
-      Ok(())
-  }
+    pub fn close_payroll_account(ctx: Context<CloseSolanaPayroll>, _title: String) -> Result<()> {
+        let payroll = &mut ctx.accounts.solana_payroll;
+        if payroll.admin != ctx.accounts.admin.key() {
+            return Err(ProgramError::IllegalOwner.into());
+        }
+        Ok(())
+    }
 
-    pub fn close(_ctx: Context<CloseSolanaPayroll>, _title: String) -> Result<()> {
+    pub fn remove_employee(
+        ctx: Context<RemoveEmployee>,
+        _name: String,
+    ) -> Result<()> {
+        let payroll = &mut ctx.accounts.solana_payroll;
+        let employee = &mut ctx.accounts.employee;
+
+        let pubkey = employee.pubkey;
+
+        if payroll.admin != ctx.accounts.admin.key() {
+            return Err(ProgramError::IllegalOwner.into());
+        }
+
+        let mut i = 0;
+        while i < payroll.employees.len() {
+            if payroll.employees[i] == pubkey {
+                payroll.employees.remove(i);
+            } else {
+                i += 1;
+            }
+        }
+
         Ok(())
     }
 }
@@ -138,9 +102,27 @@ pub struct InitializeSolanaPayroll<'info> {
       init,
       seeds = [title.as_bytes(), admin.key().as_ref()],
       bump,
-      space = 8 + 1000000,
+      space = 8 + 1000,
       payer = admin
     )]
+    pub solana_payroll: Account<'info, PayrollState>,
+    #[account(mut)]
+    pub admin: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+#[instruction(name: String, employee_id: u64)]
+pub struct AddEmployee<'info> {
+    #[account(
+        init,
+        seeds = [name.as_bytes(), &solana_payroll.id_counter.to_le_bytes()],
+        bump,
+        space = 8 + 1000,
+        payer = admin
+      )]
+    pub employee: Account<'info, Employee>,
+    #[account(mut)]
     pub solana_payroll: Account<'info, PayrollState>,
     #[account(mut)]
     pub admin: Signer<'info>,
@@ -157,49 +139,39 @@ pub struct CloseSolanaPayroll<'info> {
       mut,
       seeds = [title.as_bytes(), admin.key().as_ref()], 
       bump, 
-      close = admin, // close account and return lamports to payer
+      close = admin, 
     )]
     pub solana_payroll: Account<'info, PayrollState>,
 }
 
 #[derive(Accounts)]
-#[instruction(title: String, salary: u64, name: String)]
-pub struct AddEmployee<'info> {
-    #[account(
-      mut,
-      seeds = [title.as_bytes(), admin.key().as_ref()], 
-      bump,
-    )]
-    pub solana_payroll: Account<'info, PayrollState>,
-    #[account(mut)]
-    pub admin: Signer<'info>,
-    /// CHECK: This is being checked in the function
-    pub employee: AccountInfo<'info>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-#[instruction(title: String)]
+#[instruction(name: String)]
 pub struct RemoveEmployee<'info> {
-    #[account(
-      mut,
-      seeds = [title.as_bytes(), admin.key().as_ref()], 
-      bump, 
-    )]
-    pub solana_payroll: Account<'info, PayrollState>,
     #[account(mut)]
     pub admin: Signer<'info>,
+
+    #[account(
+      mut,
+      seeds = [name.as_bytes(), &employee.employee_id.to_le_bytes()],
+      bump, 
+      close = admin, 
+    )]
+    pub employee: Account<'info, Employee>,
     pub system_program: Program<'info, System>,
+    #[account(mut)]
+    pub solana_payroll: Account<'info, PayrollState>,
 }
 
 #[derive(Accounts)]
-#[instruction(title: String, employee_id: u64, new_salary: u64 )]
+#[instruction(name: String, new_salary: u64,)]
 pub struct UpdateSalary<'info> {
     #[account(
       mut,
-      seeds = [title.as_bytes(), admin.key().as_ref()], 
+      seeds = [name.as_bytes(), &employee.employee_id.to_le_bytes()],
       bump, 
     )]
+    pub employee: Account<'info, Employee>,
+    #[account(mut)]
     pub solana_payroll: Account<'info, PayrollState>,
     #[account(mut)]
     pub admin: Signer<'info>,
@@ -207,28 +179,17 @@ pub struct UpdateSalary<'info> {
 }
 
 #[account]
-pub struct PayrollState {
-    pub admin: Pubkey,
-    pub title: String,
-    pub id_counter: u64,
-    pub employees: Vec<Employee>,
-}
-
-#[derive(Debug, Clone, AnchorSerialize, AnchorDeserialize)]
 pub struct Employee {
     employee_id: u64,
     salary: u64,
-    pubkey: Pubkey,
     name: String,
+    pubkey: Pubkey,
 }
 
-#[derive(Accounts)]
-pub struct ProcessPayroll<'info> {
-    #[account(mut)]
-    pub admin: Signer<'info>,
-    #[account(mut)]
-    pub payroll_account: Account<'info, PayrollState>,
-    /// CHECK: This is not dangerous because we're only passing this to the system program transfer instruction
-    pub employee: AccountInfo<'info>,
-    pub system_program: Program<'info, System>,
+#[account]
+pub struct PayrollState {
+    id_counter: u64,
+    admin: Pubkey,
+    title: String,
+    employees: Vec<Pubkey>,
 }

@@ -14,17 +14,11 @@ export default function PayrollFeature() {
   return publicKey ? (
     <div>
       <AppHero
-        title="Payroll"
+        title="Payroll Accounts"
         subtitle={
-          'Create a new account by clicking the "Create" button. The state of a account is stored on-chain and can be manipulated by calling the program\'s methods (increment, decrement, set, and close).'
+          'All payroll accounts associated with the connected public key can be found here.'
         }
       >
-        <p className="mb-6">
-          <ExplorerLink
-            path={`account/${programId}`}
-            label={ellipsify(programId.toString())}
-          />
-        </p>
         <PayrollCreate />
       </AppHero>
       <PayrollList />
