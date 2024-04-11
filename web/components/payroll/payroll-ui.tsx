@@ -111,7 +111,7 @@ export function EmployeeCreate({ account }: { account: PublicKey }) {
   const title = payrollAccountQuery.data?.title; 
 
   const handleSubmit = () => {
-    if (publicKey && isFormValid && title && employee_id) {
+    if (publicKey && isFormValid && title) {
       addEmployee.mutateAsync({name, salary, employee_id, title, owner: publicKey });
     }
   };

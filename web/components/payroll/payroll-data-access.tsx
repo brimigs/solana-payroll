@@ -101,13 +101,19 @@ export function useEmployeeProgram() {
   const addEmployee = useMutation<string, Error, EmployeeArgs>({
     mutationKey: ['employee', 'initialize', { cluster }],
     mutationFn: async ({name, salary, title, owner, employee_id}) => { 
+      
       const [payrollAddress] = await PublicKey.findProgramAddress( 
         [Buffer.from(title), owner.toBuffer()],
         programId
       )
 
+      let currentPayrol = await program.account.payrollState.fetch(payrollAddress);
+
+      let buffer = Buffer.alloc(4); // allocate 4 bytes
+      buffer.writeInt32LE(currentPayrol.idCounter, 0); // write the number to the buffer
+  
       const [employeeAddress] = await PublicKey.findProgramAddress( 
-        [Buffer.from(name), new BN(employee_id)], 
+        [Buffer.from(name), buffer], 
         programId
       )
 
