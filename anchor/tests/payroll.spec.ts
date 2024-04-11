@@ -2,6 +2,10 @@ import * as anchor from '@coral-xyz/anchor';
 import { Program } from '@coral-xyz/anchor';
 import { Keypair } from '@solana/web3.js';
 import { Payroll } from '../target/types/payroll';
+import { describe, it } from 'node:test';
+import { airdropIfRequired } from "@solana-developers/helpers";
+import { LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { BN } from 'bn.js';
 
 describe('payroll', () => {
   // Configure the client to use the local cluster.
@@ -12,89 +16,100 @@ describe('payroll', () => {
   const program = anchor.workspace.Payroll as Program<Payroll>;
 
   const payrollKeypair = Keypair.generate();
+  let payRolTitle = "Hello World";
 
   it('Initialize Payroll', async () => {
-    await program.methods
-      .initialize()
+
+    await airdropIfRequired(
+      provider.connection,
+      payer.publicKey,
+      1 * LAMPORTS_PER_SOL,
+      0.8 * LAMPORTS_PER_SOL,
+    );
+
+
+    const [payrollPDA] = anchor.web3.PublicKey.findProgramAddressSync(
+      [
+        Buffer.from(payRolTitle),
+        payer.publicKey.toBuffer(),        
+      ],
+      program.programId
+    );
+
+    let tx = await program.methods
+      .initializePayroll(payRolTitle)
       .accounts({
-        payroll: payrollKeypair.publicKey,
-        payer: payer.publicKey,
-      })
-      .signers([payrollKeypair])
-      .rpc();
-
-    const currentCount = await program.account.payroll.fetch(
-      payrollKeypair.publicKey
-    );
-
-    expect(currentCount.count).toEqual(0);
-  });
-
-  it('Increment Payroll', async () => {
-    await program.methods
-      .increment()
-      .accounts({ payroll: payrollKeypair.publicKey })
-      .rpc();
-
-    const currentCount = await program.account.payroll.fetch(
-      payrollKeypair.publicKey
-    );
-
-    expect(currentCount.count).toEqual(1);
-  });
-
-  it('Increment Payroll Again', async () => {
-    await program.methods
-      .increment()
-      .accounts({ payroll: payrollKeypair.publicKey })
-      .rpc();
-
-    const currentCount = await program.account.payroll.fetch(
-      payrollKeypair.publicKey
-    );
-
-    expect(currentCount.count).toEqual(2);
-  });
-
-  it('Decrement Payroll', async () => {
-    await program.methods
-      .decrement()
-      .accounts({ payroll: payrollKeypair.publicKey })
-      .rpc();
-
-    const currentCount = await program.account.payroll.fetch(
-      payrollKeypair.publicKey
-    );
-
-    expect(currentCount.count).toEqual(1);
-  });
-
-  it('Set payroll value', async () => {
-    await program.methods
-      .set(42)
-      .accounts({ payroll: payrollKeypair.publicKey })
-      .rpc();
-
-    const currentCount = await program.account.payroll.fetch(
-      payrollKeypair.publicKey
-    );
-
-    expect(currentCount.count).toEqual(42);
-  });
-
-  it('Set close the payroll account', async () => {
-    await program.methods
-      .close()
-      .accounts({
-        payer: payer.publicKey,
-        payroll: payrollKeypair.publicKey,
+        solanaPayroll: payrollPDA,
+        admin: payer.publicKey,
       })
       .rpc();
 
-    // The account should no longer exist, returning null.
-    const userAccount = await program.account.payroll.fetchNullable(
-      payrollKeypair.publicKey
-    );
-    expect(userAccount).toBeNull();
+    console.log("Payroll initialized with tx: ", tx);
   });
+
+  it('Add Payrol', async () => {
+
+    const [payrollPDA] = anchor.web3.PublicKey.findProgramAddressSync(
+      [
+        Buffer.from(payRolTitle),
+        payer.publicKey.toBuffer(),        
+      ],
+      program.programId
+    );
+
+    let newEmployeeName = "Joe";
+    let secondEmployeeName = "Bri";
+
+    let currentPayrol = await program.account.payrollState.fetch(payrollPDA);
+
+    let buffer = Buffer.alloc(4); // allocate 4 bytes
+    buffer.writeInt32LE(currentPayrol.idCounter, 0); // write the number to the buffer
+
+    const [employeePDA] = anchor.web3.PublicKey.findProgramAddressSync(
+      [
+        Buffer.from(newEmployeeName),
+        buffer,        
+      ],
+      program.programId
+    );
+
+    let tx = await program.methods
+      .addEmployee(new BN(1000), newEmployeeName)
+      .accounts({
+        employee: employeePDA,
+        solanaPayroll: payrollPDA,
+        admin: payer.publicKey,
+      })
+      .rpc();
+
+      console.log("Add employee initialized with tx: ", tx);
+
+      currentPayrol = await program.account.payrollState.fetch(payrollPDA);
+
+      console.log("Current Payroll: ", JSON.stringify(currentPayrol));
+
+      buffer = Buffer.alloc(4); // allocate 4 bytes
+      buffer.writeInt32LE(currentPayrol.idCounter, 0); // write the number to the buffer
+  
+      const [secondEmployeePDA] = anchor.web3.PublicKey.findProgramAddressSync(
+        [
+          Buffer.from(secondEmployeeName),
+          buffer,        
+        ],
+        program.programId
+      );  
+
+      let tx2 = await program.methods
+      .addEmployee(new BN(1200), secondEmployeeName)
+      .accounts({
+        employee: secondEmployeePDA,
+        solanaPayroll: payrollPDA,
+        admin: payer.publicKey,
+      })
+      .rpc();
+
+
+  });
+
+
 });
