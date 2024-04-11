@@ -180,7 +180,7 @@ pub struct UpdateSalary<'info> {
 
 #[account]
 pub struct Employee {
-    employee_id: u64,
+    employee_id: u32,
     salary: u64,
     name: String,
     pubkey: Pubkey,
@@ -188,7 +188,7 @@ pub struct Employee {
 
 #[account]
 pub struct PayrollState {
-    id_counter: u64,
+    id_counter: u32,
     admin: Pubkey,
     title: String,
     employees: Vec<Pubkey>,
