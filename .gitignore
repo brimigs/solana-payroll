@@ -1,0 +1,69 @@
+# Dependency directories
+node_modules/
+
+# Anchor target directory
+target/
+
+# Next.js build output
+.next/
+out/
+.nx
+
+# Next.js specific
+web/.next/cache
+.nx/cache
+.next/cache
+
+# Production build
+build/
+
+# Dotenv environment variables file
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# OSX directory attributes
+.DS_Store
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional: .vercel directory
+.vercel
+
+# Temporary files
+*.tmp
+*.temp
+
+# System Files
+Thumbs.db
+Desktop.ini
+
+# Typescript cache
+*.tsbuildinfo
+
+# Anchor's IDL files (if you're keeping them in a separate directory and don't want to commit them)
+idl/
+
+# Anchor's generated client files (if you're keeping them in a separate directory and don't want to commit them)
+generated/
+
+# Solana keypairs (you should never commit secrets!)
+*.keypair

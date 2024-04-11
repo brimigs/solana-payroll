@@ -104,7 +104,7 @@ export function EmployeeCreate({ account }: { account: PublicKey }) {
   const { addEmployee } = useEmployeeProgram();
   const {payrollAccountQuery} = usePayrollProgramAccount({account})
   const { publicKey } = useWallet();
-  const [salary, setSalary] = useState(new BigNumber(0));
+  const [salary, setSalary] = useState(new BN(0));
   const [name, setName] = useState('');
   const isFormValid = name.trim() !== '';
   const employee_id: BN = payrollAccountQuery.data?.idCounter; 
@@ -134,7 +134,7 @@ export function EmployeeCreate({ account }: { account: PublicKey }) {
         type="text"
         placeholder="Salary"
         value={salary.isZero() ? '' : salary.toString()}
-        onChange={(e) => setSalary(new BigNumber((e.target.value)))}
+        onChange={(e) => setSalary(new BN((e.target.value)))}
         className="input input-bordered w-full max-w-xs"
       />
       <button
@@ -315,7 +315,7 @@ export function EmployeeCard({ account }: { account: PublicKey }) {
 
   const { publicKey } = useWallet(); 
   const name = employeeAccountQuery.data?.name; 
-  const [newSalary, setSalary] = useState( new BigNumber(0));
+  const [newSalary, setSalary] = useState( new BN(0));
   const title = payrollAccountQuery.data?.title; 
 
   const handleSubmit = () => { 

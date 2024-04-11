@@ -111,7 +111,7 @@ export function useEmployeeProgram() {
         programId
       )
 
-      return program.methods.addEmployee(name, salary).accounts({ 
+      return program.methods.addEmployee(salary, name).accounts({ 
         employee: employeeAddress, 
         solanaPayroll: payrollAddress,
       }).rpc(); 

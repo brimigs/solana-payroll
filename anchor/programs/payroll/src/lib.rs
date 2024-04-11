@@ -2,7 +2,7 @@
 
 use anchor_lang::prelude::*;
 
-declare_id!("9avcSUdT42MYMHHqxGXFuRow8K9befpYy9useB3FZyYK");
+declare_id!("9DJSeCNdizRRHCNA9gnFtfrkhAZW3A921rThY4Eqi6Zs");
 
 #[program]
 pub mod payroll {
@@ -112,7 +112,7 @@ pub struct InitializeSolanaPayroll<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(name: String, employee_id: u64)]
+#[instruction(salary: u64, name: String,)]
 pub struct AddEmployee<'info> {
     #[account(
         init,
