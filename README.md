@@ -56,19 +56,19 @@ npm run anchor keys sync
 #### Build the program:
 
 ```shell
-npm run anchor-build
+npm run anchor build
 ```
 
 #### Start the test validator with the program deployed:
 
 ```shell
-npm run anchor-localnet
+npm run anchor localnet
 ```
 
 #### Run the tests
 
 ```shell
-npm run anchor-test
+npm run anchor test
 ```
 
 #### Deploy to Devnet
